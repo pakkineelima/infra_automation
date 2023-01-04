@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create my first EC2 instance using cloudformation and installing apache.
+Parameters:
+  Imageid: 
+    Default: ami-0b0dcb5067f052a63
+    Description: This is baseline Linux instance
+    Type: String
+Resources:
+  WebAppInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref Imageid # ImageID valid only in us-east-1 region
+      InstanceType: t2.micro
+      KeyName: geetha123
+      SecurityGroupIds:
+        - !Ref WebAppSecurityGroup
+      UserData: 
+        Fn::Base64: |
+          #!/bin/bash
+          sudo yum update -y
+          sudo yum install wget
+          sudo amazon-linux-extras install java-openjdk11
+          sudo amazon-linux-extras install epel -y
+          sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
+          sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+          sudo yum install jenkins -y
+          sudo service jenkins start
+  
+
+  WebAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: JenkinsGroup
+      GroupDescription: "Allow HTTP/HTTPS and SSH inbound and outbound traffic"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
